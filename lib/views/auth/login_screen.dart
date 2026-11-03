@@ -5,7 +5,7 @@ import '../../core/utils/ui_helpers.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
-import '../dashboard/dashboard_screen.dart';
+import '../main_navigation_screen.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -42,7 +42,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (success) {
       UiHelpers.showSnackBar(context, 'Login berhasil!', isSuccess: true);
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const DashboardScreen()),
+        MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
       );
     } else {
       UiHelpers.showSnackBar(
@@ -71,41 +71,54 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   Center(
                     child: Container(
-                      width: 64,
-                      height: 64,
+                      width: 72,
+                      height: 72,
                       decoration: BoxDecoration(
-                        color: AppColors.primaryLight,
-                        borderRadius: BorderRadius.circular(16),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.15),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
-                      child: const Icon(Icons.recycling_rounded, size: 36, color: AppColors.primary),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(18),
+                        child: Image.asset(
+                          'assets/images/app_logo.png',
+                          fit: BoxFit.cover,
+                        ),
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
                   const Text(
-                    'Selamat Datang Kembali',
+                    'Waste Management',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 22,
+                      fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+                      color: AppColors.primary,
+                      letterSpacing: -0.5,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
                   const Text(
-                    'Masuk untuk melaporkan dan memantau sampah di lingkungan Anda.',
+                    'Masuk sebagai Warga untuk melaporkan dan memantau pengelolaan sampah.',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 28),
                   CustomTextField(
-                    label: 'Email',
-                    hint: 'nama@example.com',
+                    label: 'Username',
+                    hint: 'Masukkan username (contoh: user)',
                     controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    prefixIcon: const Icon(Icons.email_outlined, color: AppColors.textMuted, size: 20),
+                    keyboardType: TextInputType.text,
+                    prefixIcon: const Icon(Icons.person_outline, color: AppColors.textMuted, size: 20),
                     validator: (val) {
-                      if (val == null || val.trim().isEmpty) return 'Email wajib diisi';
-                      if (!val.contains('@')) return 'Format email tidak valid';
+                      if (val == null || val.trim().isEmpty) return 'Username wajib diisi';
                       return null;
                     },
                   ),
@@ -140,6 +153,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     isLoading: authProvider.status == AuthStatus.loading,
                     onPressed: _handleLogin,
                   ),
+
+                  
                   const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,

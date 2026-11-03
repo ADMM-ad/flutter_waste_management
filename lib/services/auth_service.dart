@@ -98,6 +98,61 @@ class AuthService {
     }
   }
 
+  /// Update profile
+  Future<ApiResponse<UserModel>> updateProfile({
+    required String name,
+    String? phoneNumber,
+  }) async {
+    try {
+      final response = await _dioClient.dio.put(
+        ApiConstants.updateProfile,
+        data: {
+          'name': name,
+          'phone_number': phoneNumber,
+        },
+      );
+      final data = response.data as Map<String, dynamic>;
+      if (_isSuccess(data)) {
+        final user = UserModel.fromJson(data['data']);
+        return ApiResponse.success(user, message: data['message'] ?? 'Profil berhasil diperbarui');
+      } else {
+        return ApiResponse.error(data['message'] ?? 'Gagal memperbarui profil');
+      }
+    } on DioException catch (e) {
+      return ApiResponse.error(_handleDioError(e));
+    } catch (e) {
+      return ApiResponse.error(e.toString());
+    }
+  }
+
+  /// Change password
+  Future<ApiResponse<void>> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String newPasswordConfirmation,
+  }) async {
+    try {
+      final response = await _dioClient.dio.put(
+        ApiConstants.updatePassword,
+        data: {
+          'current_password': currentPassword,
+          'password': newPassword,
+          'password_confirmation': newPasswordConfirmation,
+        },
+      );
+      final data = response.data as Map<String, dynamic>;
+      if (_isSuccess(data)) {
+        return ApiResponse.success(null, message: data['message'] ?? 'Kata sandi berhasil diperbarui');
+      } else {
+        return ApiResponse.error(data['message'] ?? 'Gagal memperbarui kata sandi');
+      }
+    } on DioException catch (e) {
+      return ApiResponse.error(_handleDioError(e));
+    } catch (e) {
+      return ApiResponse.error(e.toString());
+    }
+  }
+
   /// Logout
   Future<ApiResponse<void>> logout() async {
     try {

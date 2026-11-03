@@ -116,11 +116,11 @@ class ReportService {
         'longitude': longitude,
         'scale': scale,
         'urgency': urgency,
+        'address': (address != null && address.trim().isNotEmpty)
+            ? address.trim()
+            : 'Titik koordinat (${latitude.toStringAsFixed(6)}, ${longitude.toStringAsFixed(6)})',
       };
 
-      if (address != null && address.isNotEmpty) {
-        formDataMap['address'] = address;
-      }
       if (aiPredictedCategory != null) {
         formDataMap['ai_predicted_category'] = aiPredictedCategory;
       }
@@ -151,13 +151,28 @@ class ReportService {
     if (e.response != null && e.response?.data != null) {
       final data = e.response?.data;
       if (data is Map) {
-        if (data.containsKey('message')) {
-          return data['message'].toString();
-        }
-        if (data.containsKey('errors')) {
+        // Priority 1: Extract field-level validation errors
+        if (data.containsKey('errors') && data['errors'] is Map) {
           final errors = data['errors'] as Map;
-          final firstKey = errors.keys.first;
-          return errors[firstKey][0].toString();
+          final messages = <String>[];
+          errors.forEach((key, val) {
+            if (val is List && val.isNotEmpty) {
+              messages.add(val.first.toString());
+            } else if (val is String) {
+              messages.add(val);
+            }
+          });
+          if (messages.isNotEmpty) {
+            return messages.join('\n');
+          }
+        }
+
+        // Priority 2: General message
+        if (data.containsKey('message') && data['message'] != null) {
+          final msg = data['message'].toString();
+          if (msg.trim().isNotEmpty) {
+            return msg;
+          }
         }
       }
     }

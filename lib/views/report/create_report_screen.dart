@@ -10,6 +10,7 @@ import '../../providers/report_provider.dart';
 import '../../widgets/ai_result_card_widget.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
+import '../../widgets/searchable_dropdown.dart';
 
 class CreateReportScreen extends StatefulWidget {
   const CreateReportScreen({super.key});
@@ -82,17 +83,36 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
     );
   }
 
-  Future<void> _processImage(File file) async {
+  void _processImage(File file) {
+    final formProvider = Provider.of<ReportFormProvider>(context, listen: false);
+    formProvider.setImageFile(file);
+  }
+
+  Future<void> _analyzeWithAi() async {
     final formProvider = Provider.of<ReportFormProvider>(context, listen: false);
     final aiProvider = Provider.of<AiDetectionProvider>(context, listen: false);
     final reportProvider = Provider.of<ReportProvider>(context, listen: false);
 
-    formProvider.setImageFile(file);
+    if (formProvider.imageFile == null) return;
 
-    // Call FastAPI AI service
-    final prediction = await aiProvider.analyzeImage(file);
+    final prediction = await aiProvider.analyzeImage(formProvider.imageFile!);
     if (prediction != null) {
       formProvider.setAiPrediction(prediction, reportProvider.categories);
+      if (mounted) {
+        UiHelpers.showSnackBar(
+          context,
+          'AI Terdeteksi: ${prediction.predictedClass} (${(prediction.confidenceScore * 100).toStringAsFixed(1)}%)',
+          isSuccess: true,
+        );
+      }
+    } else {
+      if (mounted) {
+        UiHelpers.showSnackBar(
+          context,
+          'Server AI sedang offline. Silakan pilih kategori secara manual di bawah.',
+          isError: true,
+        );
+      }
     }
   }
 
@@ -162,12 +182,34 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                       ),
                       const SizedBox(height: 12),
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          OutlinedButton.icon(
-                            onPressed: _showImagePickerModal,
-                            icon: const Icon(Icons.refresh, size: 16),
-                            label: const Text('Ganti Foto'),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: _showImagePickerModal,
+                              icon: const Icon(Icons.refresh, size: 16),
+                              label: const Text('Ganti Foto'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.textPrimary,
+                                side: const BorderSide(color: AppColors.border),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            flex: 2,
+                            child: ElevatedButton.icon(
+                              onPressed: aiProvider.isAnalyzing ? null : _analyzeWithAi,
+                              icon: const Icon(Icons.auto_awesome, size: 16, color: Colors.white),
+                              label: Text(
+                                aiProvider.isAnalyzing ? 'Menganalisis...' : 'Cek Kategori AI',
+                                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -200,7 +242,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                               ),
                               SizedBox(height: 4),
                               Text(
-                                'AI akan mendeteksi kategori secara instan',
+                                'Pilih foto, lalu gunakan tombol Cek AI atau input manual',
                                 style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                               ),
                             ],
@@ -256,32 +298,32 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Category Dropdown
-                    const Text(
-                      'Kategori Sampah *',
-                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                    ),
-                    const SizedBox(height: 6),
-                    DropdownButtonFormField<int>(
-                      initialValue: formProvider.selectedCategoryId,
-                      isExpanded: true,
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: AppColors.surface,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                      hint: const Text('Pilih Kategori Sampah'),
+                    // Category Searchable Dropdown (DESIGN.md Official)
+                    SearchableDropdown<int>(
+                      label: 'Kategori Sampah *',
+                      placeholder: 'Cari atau pilih jenis sampah...',
+                      selectedValue: formProvider.selectedCategoryId,
                       items: reportProvider.categories.map((cat) {
-                        return DropdownMenuItem<int>(
+                        IconData icon;
+                        final nameLower = cat.name.toLowerCase();
+                        if (nameLower.contains('organ')) {
+                          icon = Icons.eco;
+                        } else if (nameLower.contains('plast')) {
+                          icon = Icons.water_drop;
+                        } else {
+                          icon = Icons.description;
+                        }
+                        return SearchableDropdownItem<int>(
                           value: cat.id,
-                          child: Text(cat.name),
+                          label: cat.name,
+                          subtitle: cat.description,
+                          icon: icon,
                         );
                       }).toList(),
                       onChanged: (val) {
                         if (val != null) formProvider.setCategory(val);
                       },
-                      validator: (val) => val == null ? 'Pilih salah satu kategori' : null,
+                      validator: (val) => val == null ? 'Pilih salah satu kategori sampah' : null,
                     ),
 
                     const SizedBox(height: 16),
@@ -295,6 +337,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                       onChanged: (val) => formProvider.setDescription(val),
                       validator: (val) {
                         if (val == null || val.trim().isEmpty) return 'Deskripsi wajib diisi';
+                        if (val.trim().length < 10) return 'Deskripsi minimal 10 karakter (saat ini ${val.trim().length})';
                         return null;
                       },
                     ),
@@ -304,16 +347,28 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                     // Scale Selector
                     const Text('Skala Volume Sampah', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                     const SizedBox(height: 6),
-                    SegmentedButton<String>(
-                      segments: const [
-                        ButtonSegment(value: 'small', label: Text('Kecil')),
-                        ButtonSegment(value: 'medium', label: Text('Sedang')),
-                        ButtonSegment(value: 'large', label: Text('Besar')),
-                      ],
-                      selected: {formProvider.scale},
-                      onSelectionChanged: (val) {
-                        formProvider.setScale(val.first);
-                      },
+                    SizedBox(
+                      width: double.infinity,
+                      child: SegmentedButton<String>(
+                        showSelectedIcon: false,
+                        expandedInsets: EdgeInsets.zero,
+                        style: SegmentedButton.styleFrom(
+                          backgroundColor: AppColors.surface,
+                          selectedBackgroundColor: AppColors.primary,
+                          selectedForegroundColor: Colors.white,
+                          foregroundColor: AppColors.textPrimary,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        segments: const [
+                          ButtonSegment(value: 'small', label: Center(child: Text('Kecil'))),
+                          ButtonSegment(value: 'medium', label: Center(child: Text('Sedang'))),
+                          ButtonSegment(value: 'large', label: Center(child: Text('Besar'))),
+                        ],
+                        selected: {formProvider.scale},
+                        onSelectionChanged: (val) {
+                          formProvider.setScale(val.first);
+                        },
+                      ),
                     ),
 
                     const SizedBox(height: 16),
@@ -321,16 +376,28 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                     // Urgency Selector
                     const Text('Tingkat Urgensi', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                     const SizedBox(height: 6),
-                    SegmentedButton<String>(
-                      segments: const [
-                        ButtonSegment(value: 'low', label: Text('Rendah')),
-                        ButtonSegment(value: 'medium', label: Text('Sedang')),
-                        ButtonSegment(value: 'high', label: Text('Darurat')),
-                      ],
-                      selected: {formProvider.urgency},
-                      onSelectionChanged: (val) {
-                        formProvider.setUrgency(val.first);
-                      },
+                    SizedBox(
+                      width: double.infinity,
+                      child: SegmentedButton<String>(
+                        showSelectedIcon: false,
+                        expandedInsets: EdgeInsets.zero,
+                        style: SegmentedButton.styleFrom(
+                          backgroundColor: AppColors.surface,
+                          selectedBackgroundColor: AppColors.primary,
+                          selectedForegroundColor: Colors.white,
+                          foregroundColor: AppColors.textPrimary,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        segments: const [
+                          ButtonSegment(value: 'low', label: Center(child: Text('Rendah'))),
+                          ButtonSegment(value: 'medium', label: Center(child: Text('Sedang'))),
+                          ButtonSegment(value: 'high', label: Center(child: Text('Darurat'))),
+                        ],
+                        selected: {formProvider.urgency},
+                        onSelectionChanged: (val) {
+                          formProvider.setUrgency(val.first);
+                        },
+                      ),
                     ),
 
                     const SizedBox(height: 20),

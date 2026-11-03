@@ -97,6 +97,42 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
+  /// Update profile
+  Future<bool> updateProfile({required String name, String? phoneNumber}) async {
+    _errorMessage = null;
+    final response = await _authService.updateProfile(name: name, phoneNumber: phoneNumber);
+    if (response.isSuccess) {
+      _user = response.data;
+      notifyListeners();
+      return true;
+    } else {
+      _errorMessage = response.message;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Change password
+  Future<bool> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String newPasswordConfirmation,
+  }) async {
+    _errorMessage = null;
+    final response = await _authService.changePassword(
+      currentPassword: currentPassword,
+      newPassword: newPassword,
+      newPasswordConfirmation: newPasswordConfirmation,
+    );
+    if (response.isSuccess) {
+      return true;
+    } else {
+      _errorMessage = response.message;
+      notifyListeners();
+      return false;
+    }
+  }
+
   /// Logout
   Future<void> logout() async {
     await _authService.logout();

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // Brand palette
-  static const Color primary = Color(0xFF16A34A);       // Tailwind Emerald 600
-  static const Color primaryDark = Color(0xFF15803D);   // Tailwind Emerald 700
-  static const Color primaryLight = Color(0xFFDCFCE7);  // Tailwind Emerald 100
-  static const Color secondary = Color(0xFF0F766E);     // Teal 700
-  static const Color accent = Color(0xFF0D9488);        // Teal 600
+  // Brand palette (DESIGN.md Official)
+  static const Color primary = Color(0xFF15803D);       // Forest Green #15803D
+  static const Color primaryDark = Color(0xFF166534);   // Forest Green Dark #166534
+  static const Color primaryLight = Color(0xFFDCFCE7);  // Forest Green Tint #DCFCE7
+  static const Color secondary = Color(0xFF0F766E);     // Deep Teal #0F766E
+  static const Color accent = Color(0xFF15803D);
 
   // Neutrals
   static const Color background = Color(0xFFF8FAFC);    // Slate 50

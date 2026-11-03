@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'core/constants/app_colors.dart';
 import 'providers/ai_detection_provider.dart';
@@ -26,7 +27,7 @@ class WasteManagementApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ReportFormProvider()),
       ],
       child: MaterialApp(
-        title: 'Bank Sampah Digital',
+        title: 'Waste Management',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           useMaterial3: true,
@@ -37,13 +38,16 @@ class WasteManagementApp extends StatelessWidget {
             surface: AppColors.surface,
           ),
           scaffoldBackgroundColor: AppColors.background,
-          fontFamily: 'Inter',
-          appBarTheme: const AppBarTheme(
+          textTheme: GoogleFonts.plusJakartaSansTextTheme().apply(
+            bodyColor: AppColors.textPrimary,
+            displayColor: AppColors.textPrimary,
+          ),
+          appBarTheme: AppBarTheme(
             elevation: 0,
             backgroundColor: Colors.white,
             foregroundColor: AppColors.textPrimary,
             centerTitle: false,
-            titleTextStyle: TextStyle(
+            titleTextStyle: GoogleFonts.plusJakartaSans(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: AppColors.textPrimary,

@@ -4,13 +4,18 @@ import '../../core/constants/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/report_provider.dart';
 import '../../widgets/report_card_widget.dart';
+import '../../widgets/skeletons/dashboard_stats_skeleton.dart';
+import '../../widgets/skeletons/report_card_skeleton.dart';
 import '../auth/login_screen.dart';
+import '../profile/profile_screen.dart';
 import '../report/create_report_screen.dart';
 import '../report/report_detail_screen.dart';
 import '../report/report_history_screen.dart';
+import '../../widgets/clean_flat_app_bar.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+  final bool isNested;
+  const DashboardScreen({super.key, this.isNested = false});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -40,75 +45,44 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: AppColors.primaryLight,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(Icons.eco, color: AppColors.primary, size: 20),
-            ),
-            const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Halo Warga,',
-                  style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+      appBar: CleanFlatAppBar(
+        userName: user?.name ?? 'Warga',
+        onProfileTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ProfileScreen()),
+          );
+        },
+        onLogoutTap: () async {
+          final confirm = await showDialog<bool>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Konfirmasi Keluar'),
+              content: const Text('Apakah Anda yakin ingin keluar dari aplikasi?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: const Text('Batal'),
                 ),
-                Text(
-                  user?.name ?? 'Pengguna',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                  ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: const Text('Keluar', style: TextStyle(color: Colors.white)),
                 ),
               ],
             ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: AppColors.error),
-            tooltip: 'Logout',
-            onPressed: () async {
-              final confirm = await showDialog<bool>(
-                context: context,
-                builder: (ctx) => AlertDialog(
-                  title: const Text('Konfirmasi Keluar'),
-                  content: const Text('Apakah Anda yakin ingin keluar dari aplikasi?'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(ctx, false),
-                      child: const Text('Batal'),
-                    ),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-                      onPressed: () => Navigator.pop(ctx, true),
-                      child: const Text('Keluar', style: TextStyle(color: Colors.white)),
-                    ),
-                  ],
-                ),
-              );
+          );
 
-              if (confirm == true && mounted) {
-                await authProvider.logout();
-                if (!mounted) return;
-                Navigator.pushAndRemoveUntil(
-                  this.context,
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                  (route) => false,
-                );
-              }
-            },
-          ),
-        ],
+          if (confirm == true && mounted) {
+            await authProvider.logout();
+            if (!mounted) return;
+            Navigator.pushAndRemoveUntil(
+              this.context,
+              MaterialPageRoute(builder: (_) => const LoginScreen()),
+              (route) => false,
+            );
+          }
+        },
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -127,7 +101,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF0F766E), Color(0xFF14B8A6)],
+                    colors: [Color(0xFF15803D), Color(0xFF166534)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -178,16 +152,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
               const SizedBox(height: 20),
 
-              // Summary Stats Row
-              Row(
-                children: [
-                  _buildStatCard('Menunggu', pendingCount.toString(), AppColors.pendingBg, AppColors.pending),
-                  const SizedBox(width: 10),
-                  _buildStatCard('Diproses', processCount.toString(), AppColors.inProgressBg, AppColors.inProgress),
-                  const SizedBox(width: 10),
-                  _buildStatCard('Selesai', completedCount.toString(), AppColors.completedBg, AppColors.completed),
-                ],
-              ),
+              // Summary Stats Row (Skeleton Loading if fetching)
+              if (reportProvider.isLoadingReports)
+                const DashboardStatsSkeleton()
+              else
+                Row(
+                  children: [
+                    _buildStatCard('Menunggu', pendingCount.toString(), AppColors.pendingBg, AppColors.pending),
+                    const SizedBox(width: 10),
+                    _buildStatCard('Diproses', processCount.toString(), AppColors.inProgressBg, AppColors.inProgress),
+                    const SizedBox(width: 10),
+                    _buildStatCard('Selesai', completedCount.toString(), AppColors.completedBg, AppColors.completed),
+                  ],
+                ),
 
               const SizedBox(height: 24),
 
@@ -215,13 +192,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               const SizedBox(height: 8),
 
-              // Reports List Preview
+              // Reports List Preview (Skeleton Loading if fetching)
               if (reportProvider.isLoadingReports)
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 40),
-                    child: CircularProgressIndicator(),
-                  ),
+                Column(
+                  children: List.generate(3, (_) => const ReportCardSkeleton()),
                 )
               else if (reportProvider.reports.isEmpty)
                 Container(

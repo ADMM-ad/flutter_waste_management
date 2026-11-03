@@ -3,11 +3,13 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/report_provider.dart';
 import '../../widgets/report_card_widget.dart';
+import '../../widgets/skeletons/report_card_skeleton.dart';
 import 'create_report_screen.dart';
 import 'report_detail_screen.dart';
 
 class ReportHistoryScreen extends StatefulWidget {
-  const ReportHistoryScreen({super.key});
+  final bool isNested;
+  const ReportHistoryScreen({super.key, this.isNested = false});
 
   @override
   State<ReportHistoryScreen> createState() => _ReportHistoryScreenState();
@@ -82,23 +84,29 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen>
           tabs: _statusTabs.map((t) => Tab(text: t['label'])).toList(),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        child: const Icon(Icons.add),
-        onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const CreateReportScreen()),
-          );
-        },
-      ),
+      floatingActionButton: widget.isNested
+          ? null
+          : FloatingActionButton(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              child: const Icon(Icons.add),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const CreateReportScreen()),
+                );
+              },
+            ),
       body: RefreshIndicator(
         onRefresh: () async {
           final selectedStatus = _statusTabs[_tabController.index]['value']!;
           await reportProvider.fetchReports(refresh: true, status: selectedStatus);
         },
         child: reportProvider.isLoadingReports
-            ? const Center(child: CircularProgressIndicator())
+            ? ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: 4,
+                itemBuilder: (_, __) => const ReportCardSkeleton(),
+              )
             : reportProvider.reports.isEmpty
                 ? Center(
                     child: SingleChildScrollView(

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_waste_manegement/models/ai_prediction_model.dart';
-import 'package:flutter_waste_manegement/models/user_model.dart';
-import 'package:flutter_waste_manegement/models/waste_category_model.dart';
+import 'package:flutter_waste_management/models/ai_prediction_model.dart';
+import 'package:flutter_waste_management/models/user_model.dart';
+import 'package:flutter_waste_management/models/waste_category_model.dart';
 
 void main() {
   group('Model Serialization Tests', () {

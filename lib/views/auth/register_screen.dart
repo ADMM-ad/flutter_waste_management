@@ -5,7 +5,7 @@ import '../../core/utils/ui_helpers.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
-import '../dashboard/dashboard_screen.dart';
+import '../main_navigation_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -22,6 +22,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passwordController = TextEditingController();
   final _passwordConfirmationController = TextEditingController();
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   @override
   void dispose() {
@@ -50,7 +51,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (success) {
       UiHelpers.showSnackBar(context, 'Akun berhasil dibuat!', isSuccess: true);
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const DashboardScreen()),
+        MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
         (route) => false,
       );
     } else {
@@ -85,6 +86,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  Center(
+                    child: Container(
+                      width: 56,
+                      height: 56,
+                      margin: const EdgeInsets.only(bottom: 14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.12),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(14),
+                        child: Image.asset(
+                          'assets/images/app_logo.png',
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  ),
                   const Text(
                     'Pendaftaran Warga',
                     style: TextStyle(
@@ -111,14 +137,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: 16),
                   CustomTextField(
-                    label: 'Alamat Email',
-                    hint: 'budi@example.com',
+                    label: 'Username',
+                    hint: 'Pilih username unik Anda',
                     controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    prefixIcon: const Icon(Icons.email_outlined, color: AppColors.textMuted, size: 20),
+                    keyboardType: TextInputType.text,
+                    prefixIcon: const Icon(Icons.account_circle_outlined, color: AppColors.textMuted, size: 20),
                     validator: (val) {
-                      if (val == null || val.trim().isEmpty) return 'Email wajib diisi';
-                      if (!val.contains('@')) return 'Format email tidak valid';
+                      if (val == null || val.trim().isEmpty) return 'Username wajib diisi';
                       return null;
                     },
                   ),
@@ -160,8 +185,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     label: 'Konfirmasi Password',
                     hint: 'Ulangi password di atas',
                     controller: _passwordConfirmationController,
-                    obscureText: _obscurePassword,
+                    obscureText: _obscureConfirmPassword,
                     prefixIcon: const Icon(Icons.lock_reset_outlined, color: AppColors.textMuted, size: 20),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureConfirmPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                        color: AppColors.textMuted,
+                        size: 20,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscureConfirmPassword = !_obscureConfirmPassword;
+                        });
+                      },
+                    ),
                     validator: (val) {
                       if (val != _passwordController.text) {
                         return 'Konfirmasi password tidak cocok';
