@@ -39,11 +39,19 @@ class ReportService {
   Future<ApiResponse<List<ReportModel>>> getReports({
     int page = 1,
     String? status,
+    String? startDate,
+    String? endDate,
   }) async {
     try {
       final queryParams = <String, dynamic>{'page': page};
       if (status != null && status.isNotEmpty && status != 'all') {
         queryParams['status'] = status;
+      }
+      if (startDate != null && startDate.isNotEmpty) {
+        queryParams['start_date'] = startDate;
+      }
+      if (endDate != null && endDate.isNotEmpty) {
+        queryParams['end_date'] = endDate;
       }
 
       final response = await _dioClient.dio.get(
@@ -139,6 +147,85 @@ class ReportService {
         return ApiResponse.success(report, message: data['message']);
       } else {
         return ApiResponse.error(data['message'] ?? 'Gagal mengirim laporan');
+      }
+    } on DioException catch (e) {
+      return ApiResponse.error(_handleDioError(e));
+    } catch (e) {
+      return ApiResponse.error(e.toString());
+    }
+  }
+
+  /// Update an existing pending report
+  Future<ApiResponse<ReportModel>> updateReport({
+    required int reportId,
+    required int categoryId,
+    required String description,
+    File? photoFile,
+    required double latitude,
+    required double longitude,
+    String? address,
+    required String scale,
+    required String urgency,
+    String? aiPredictedCategory,
+    double? aiConfidenceScore,
+  }) async {
+    try {
+      final formDataMap = <String, dynamic>{
+        '_method': 'PUT',
+        'category_id': categoryId,
+        'description': description,
+        'latitude': latitude,
+        'longitude': longitude,
+        'scale': scale,
+        'urgency': urgency,
+        'address': (address != null && address.trim().isNotEmpty)
+            ? address.trim()
+            : 'Titik koordinat (${latitude.toStringAsFixed(6)}, ${longitude.toStringAsFixed(6)})',
+      };
+
+      if (photoFile != null) {
+        final fileName = photoFile.path.split(Platform.pathSeparator).last;
+        formDataMap['photo'] = await MultipartFile.fromFile(
+          photoFile.path,
+          filename: fileName,
+        );
+      }
+
+      if (aiPredictedCategory != null) {
+        formDataMap['ai_predicted_category'] = aiPredictedCategory;
+      }
+      if (aiConfidenceScore != null) {
+        formDataMap['ai_confidence_score'] = aiConfidenceScore;
+      }
+
+      final response = await _dioClient.dio.post(
+        '${ApiConstants.reports}/$reportId/update',
+        data: FormData.fromMap(formDataMap),
+      );
+
+      final data = response.data as Map<String, dynamic>;
+      if (_isSuccess(data)) {
+        final report = ReportModel.fromJson(data['data']);
+        return ApiResponse.success(report, message: data['message']);
+      } else {
+        return ApiResponse.error(data['message'] ?? 'Gagal memperbarui laporan');
+      }
+    } on DioException catch (e) {
+      return ApiResponse.error(_handleDioError(e));
+    } catch (e) {
+      return ApiResponse.error(e.toString());
+    }
+  }
+
+  /// Delete a report (pending status only)
+  Future<ApiResponse<void>> deleteReport(int reportId) async {
+    try {
+      final response = await _dioClient.dio.delete('${ApiConstants.reports}/$reportId');
+      final data = response.data as Map<String, dynamic>;
+      if (_isSuccess(data)) {
+        return ApiResponse.success(null, message: data['message']);
+      } else {
+        return ApiResponse.error(data['message'] ?? 'Gagal menghapus laporan');
       }
     } on DioException catch (e) {
       return ApiResponse.error(_handleDioError(e));

@@ -6,6 +6,7 @@ import '../../providers/report_provider.dart';
 import '../auth/login_screen.dart';
 import 'edit_profile_screen.dart';
 import 'change_password_screen.dart';
+import '../education/education_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -211,19 +212,10 @@ class ProfileScreen extends StatelessWidget {
                     icon: Icons.recycling,
                     title: 'Pedoman Pemilahan Sampah',
                     subtitle: 'Tips daur ulang 3 jenis sampah',
-                    onTap: () => _showRecycleGuide(context),
-                  ),
-                  const Divider(height: 1, color: AppColors.border),
-                  _MenuItem(
-                    icon: Icons.info_outline,
-                    title: 'Tentang Aplikasi',
-                    subtitle: 'Waste Management v1.0',
                     onTap: () {
-                      showAboutDialog(
-                        context: context,
-                        applicationName: 'Waste Management',
-                        applicationVersion: '1.0.0',
-                        applicationLegalese: 'Sistem Pengelolaan Sampah & Klasifikasi Cerdas Berkelanjutan',
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const EducationScreen()),
                       );
                     },
                   ),
@@ -254,71 +246,6 @@ class ProfileScreen extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-
-  void _showRecycleGuide(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) {
-        return Container(
-          height: MediaQuery.of(context).size.height * 0.7,
-          padding: const EdgeInsets.all(20),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.border,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Panduan Pemilahan Sampah',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: ListView(
-                  children: const [
-                    _GuideCard(
-                      title: '1. Sampah Organik (Organic Waste)',
-                      desc: 'Sisa makanan, daun, sayur, kulit buah. Dapat diolah menjadi kompos atau pakan ternak.',
-                      color: AppColors.primary,
-                      icon: Icons.eco,
-                    ),
-                    SizedBox(height: 12),
-                    _GuideCard(
-                      title: '2. Sampah Plastik (Plastic Waste)',
-                      desc: 'Botol plastik, kemasan sachet, kantong kresek, sedotan. Pastikan dibilas bersih sebelum disetor.',
-                      color: Color(0xFF0F766E),
-                      icon: Icons.water_drop,
-                    ),
-                    SizedBox(height: 12),
-                    _GuideCard(
-                      title: '3. Sampah Kertas (Paper Waste)',
-                      desc: 'Kardus, koran, buku bekas, karton box. Jaga tetap kering agar bernilai daur ulang tinggi.',
-                      color: Color(0xFFD97706),
-                      icon: Icons.menu_book,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 
@@ -388,55 +315,6 @@ class _MenuItem extends StatelessWidget {
       ),
       trailing: const Icon(Icons.chevron_right, size: 20, color: AppColors.textSecondary),
       onTap: onTap,
-    );
-  }
-}
-
-class _GuideCard extends StatelessWidget {
-  final String title;
-  final String desc;
-  final Color color;
-  final IconData icon;
-
-  const _GuideCard({
-    required this.title,
-    required this.desc,
-    required this.color,
-    required this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: color, size: 22),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: color),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  desc,
-                  style: const TextStyle(fontSize: 12, color: AppColors.textPrimary, height: 1.4),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

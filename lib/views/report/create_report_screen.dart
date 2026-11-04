@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/image_helper.dart';
 import '../../core/utils/ui_helpers.dart';
+import '../../models/report_model.dart';
 import '../../providers/ai_detection_provider.dart';
 import '../../providers/report_form_provider.dart';
 import '../../providers/report_provider.dart';
@@ -13,7 +14,8 @@ import '../../widgets/custom_text_field.dart';
 import '../../widgets/searchable_dropdown.dart';
 
 class CreateReportScreen extends StatefulWidget {
-  const CreateReportScreen({super.key});
+  final ReportModel? editReport;
+  const CreateReportScreen({super.key, this.editReport});
 
   @override
   State<CreateReportScreen> createState() => _CreateReportScreenState();
@@ -26,11 +28,18 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Auto fetch GPS location on screen open
-      final formProvider = Provider.of<ReportFormProvider>(context, listen: false);
-      formProvider.fetchLocation();
-    });
+    final formProvider = Provider.of<ReportFormProvider>(context, listen: false);
+    if (widget.editReport != null) {
+      _descriptionController.text = widget.editReport!.description;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        formProvider.initForEdit(widget.editReport!);
+      });
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        formProvider.clearForm();
+        formProvider.fetchLocation();
+      });
+    }
   }
 
   @override
@@ -122,20 +131,37 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
 
     formProvider.setDescription(_descriptionController.text);
 
-    final report = await formProvider.submitReport();
-    if (!mounted) return;
-
-    if (report != null) {
-      reportProvider.addReport(report);
-      UiHelpers.showSnackBar(context, 'Laporan berhasil dikirim!', isSuccess: true);
-      Navigator.of(context).pop();
+    if (widget.editReport != null) {
+      final updatedReport = await formProvider.updateExistingReport(widget.editReport!.id);
+      if (!mounted) return;
+      if (updatedReport != null) {
+        reportProvider.updateReportInList(updatedReport);
+        UiHelpers.showSnackBar(context, 'Laporan berhasil diperbarui!', isSuccess: true);
+        Navigator.of(context).pop();
+      } else {
+        UiHelpers.showSnackBar(
+          context,
+          formProvider.errorMessage ?? 'Gagal memperbarui laporan',
+          isError: true,
+          onRetry: _handleSubmit,
+        );
+      }
     } else {
-      UiHelpers.showSnackBar(
-        context,
-        formProvider.errorMessage ?? 'Gagal mengirim laporan',
-        isError: true,
-        onRetry: _handleSubmit,
-      );
+      final report = await formProvider.submitReport();
+      if (!mounted) return;
+
+      if (report != null) {
+        reportProvider.addReport(report);
+        UiHelpers.showSnackBar(context, 'Laporan berhasil dikirim!', isSuccess: true);
+        Navigator.of(context).pop();
+      } else {
+        UiHelpers.showSnackBar(
+          context,
+          formProvider.errorMessage ?? 'Gagal mengirim laporan',
+          isError: true,
+          onRetry: _handleSubmit,
+        );
+      }
     }
   }
 
@@ -148,7 +174,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Buat Laporan Baru'),
+        title: Text(widget.editReport != null ? 'Edit Laporan Sampah' : 'Buat Laporan Baru'),
         backgroundColor: Colors.white,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
@@ -212,6 +238,27 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                             ),
                           ),
                         ],
+                      ),
+                    ] else if (widget.editReport != null && widget.editReport!.photoUrl.isNotEmpty) ...[
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          widget.editReport!.photoUrl,
+                          height: 200,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: _showImagePickerModal,
+                        icon: const Icon(Icons.refresh, size: 16),
+                        label: const Text('Pilih Foto Baru'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.textPrimary,
+                          side: const BorderSide(color: AppColors.border),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
                       ),
                     ] else ...[
                       GestureDetector(
@@ -454,7 +501,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
 
               // Submit Button
               CustomButton(
-                text: 'Kirim Laporan Sampah',
+                text: widget.editReport != null ? 'Simpan Perubahan Laporan' : 'Kirim Laporan Sampah',
                 isLoading: formProvider.isSubmitting,
                 onPressed: _handleSubmit,
               ),

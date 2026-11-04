@@ -21,6 +21,8 @@ class ReportProvider with ChangeNotifier {
   int _currentPage = 1;
   bool _hasMore = true;
   String _selectedStatusFilter = 'all';
+  String? _startDateFilter;
+  String? _endDateFilter;
   String? _errorMessage;
 
   List<WasteCategoryModel> get categories => _categories;
@@ -31,6 +33,8 @@ class ReportProvider with ChangeNotifier {
   bool get isLoadingDetail => _isLoadingDetail;
   bool get isLoadingMore => _isLoadingMore;
   String get selectedStatusFilter => _selectedStatusFilter;
+  String? get startDateFilter => _startDateFilter;
+  String? get endDateFilter => _endDateFilter;
   String? get errorMessage => _errorMessage;
 
   /// Load categories
@@ -48,7 +52,12 @@ class ReportProvider with ChangeNotifier {
   }
 
   /// Load user reports with refresh
-  Future<void> fetchReports({String? status, bool refresh = false}) async {
+  Future<void> fetchReports({
+    String? status,
+    String? startDate,
+    String? endDate,
+    bool refresh = false,
+  }) async {
     if (refresh) {
       _currentPage = 1;
       _hasMore = true;
@@ -58,6 +67,12 @@ class ReportProvider with ChangeNotifier {
     if (status != null) {
       _selectedStatusFilter = status;
     }
+    if (startDate != null) {
+      _startDateFilter = startDate;
+    }
+    if (endDate != null) {
+      _endDateFilter = endDate;
+    }
 
     _isLoadingReports = true;
     _errorMessage = null;
@@ -66,6 +81,8 @@ class ReportProvider with ChangeNotifier {
     final response = await _reportService.getReports(
       page: _currentPage,
       status: _selectedStatusFilter == 'all' ? null : _selectedStatusFilter,
+      startDate: _startDateFilter,
+      endDate: _endDateFilter,
     );
 
     _isLoadingReports = false;
@@ -96,6 +113,8 @@ class ReportProvider with ChangeNotifier {
     final response = await _reportService.getReports(
       page: _currentPage,
       status: _selectedStatusFilter == 'all' ? null : _selectedStatusFilter,
+      startDate: _startDateFilter,
+      endDate: _endDateFilter,
     );
 
     _isLoadingMore = false;
@@ -132,6 +151,35 @@ class ReportProvider with ChangeNotifier {
   /// Add new report to local list immediately
   void addReport(ReportModel report) {
     _reports.insert(0, report);
+    notifyListeners();
+  }
+
+  /// Delete a report by ID
+  Future<bool> deleteReport(int id) async {
+    final response = await _reportService.deleteReport(id);
+    if (response.isSuccess) {
+      _reports.removeWhere((r) => r.id == id);
+      if (_currentReport?.id == id) {
+        _currentReport = null;
+      }
+      notifyListeners();
+      return true;
+    } else {
+      _errorMessage = response.message;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Update existing report in local list
+  void updateReportInList(ReportModel updatedReport) {
+    final index = _reports.indexWhere((r) => r.id == updatedReport.id);
+    if (index != -1) {
+      _reports[index] = updatedReport;
+    }
+    if (_currentReport?.id == updatedReport.id) {
+      _currentReport = updatedReport;
+    }
     notifyListeners();
   }
 }

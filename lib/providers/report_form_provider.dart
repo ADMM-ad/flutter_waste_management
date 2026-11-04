@@ -181,6 +181,75 @@ class ReportFormProvider with ChangeNotifier {
     }
   }
 
+  void initForEdit(ReportModel report) {
+    _imageFile = null;
+    _selectedCategoryId = report.category?.id;
+    _description = report.description;
+    _scale = report.scale;
+    _urgency = report.urgency;
+    _latitude = report.latitude;
+    _longitude = report.longitude;
+    _address = report.address;
+    if (report.aiPredictedCategory != null) {
+      _aiPrediction = AiPredictionModel(
+        predictedClass: report.aiPredictedCategory!,
+        confidenceScore: report.aiConfidenceScore ?? 0.0,
+        probabilities: {},
+      );
+    } else {
+      _aiPrediction = null;
+    }
+    _errorMessage = null;
+    notifyListeners();
+  }
+
+  Future<ReportModel?> updateExistingReport(int reportId) async {
+    if (_selectedCategoryId == null) {
+      _errorMessage = 'Silakan pilih kategori sampah.';
+      notifyListeners();
+      return null;
+    }
+    if (_description.trim().isEmpty) {
+      _errorMessage = 'Silakan masukkan deskripsi laporan.';
+      notifyListeners();
+      return null;
+    }
+    if (_latitude == null || _longitude == null) {
+      _errorMessage = 'Lokasi GPS belum tersedia.';
+      notifyListeners();
+      return null;
+    }
+
+    _isSubmitting = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    final response = await _reportService.updateReport(
+      reportId: reportId,
+      categoryId: _selectedCategoryId!,
+      description: _description.trim(),
+      photoFile: _imageFile,
+      latitude: _latitude!,
+      longitude: _longitude!,
+      address: _address,
+      scale: _scale,
+      urgency: _urgency,
+      aiPredictedCategory: _aiPrediction?.predictedClass,
+      aiConfidenceScore: _aiPrediction?.confidenceScore,
+    );
+
+    _isSubmitting = false;
+
+    if (response.isSuccess) {
+      clearForm();
+      return response.data;
+    } else {
+      _errorMessage = response.message;
+      notifyListeners();
+      return null;
+    }
+  }
+
   void clearForm() {
     _imageFile = null;
     _selectedCategoryId = null;

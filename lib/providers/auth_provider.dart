@@ -98,9 +98,9 @@ class AuthProvider with ChangeNotifier {
   }
 
   /// Update profile
-  Future<bool> updateProfile({required String name, String? phoneNumber}) async {
+  Future<bool> updateProfile({required String name, String? email, String? phoneNumber}) async {
     _errorMessage = null;
-    final response = await _authService.updateProfile(name: name, phoneNumber: phoneNumber);
+    final response = await _authService.updateProfile(name: name, email: email, phoneNumber: phoneNumber);
     if (response.isSuccess) {
       _user = response.data;
       notifyListeners();

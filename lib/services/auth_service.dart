@@ -101,15 +101,21 @@ class AuthService {
   /// Update profile
   Future<ApiResponse<UserModel>> updateProfile({
     required String name,
+    String? email,
     String? phoneNumber,
   }) async {
     try {
+      final payload = <String, dynamic>{
+        'name': name,
+        'phone_number': phoneNumber,
+      };
+      if (email != null && email.trim().isNotEmpty) {
+        payload['email'] = email.trim();
+      }
+
       final response = await _dioClient.dio.put(
         ApiConstants.updateProfile,
-        data: {
-          'name': name,
-          'phone_number': phoneNumber,
-        },
+        data: payload,
       );
       final data = response.data as Map<String, dynamic>;
       if (_isSuccess(data)) {

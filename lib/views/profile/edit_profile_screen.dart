@@ -13,6 +13,7 @@ class EditProfileScreen extends StatefulWidget {
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
+  late TextEditingController _emailController;
   late TextEditingController _phoneController;
   bool _isLoading = false;
 
@@ -21,12 +22,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.initState();
     final user = Provider.of<AuthProvider>(context, listen: false).user;
     _nameController = TextEditingController(text: user?.name ?? '');
+    _emailController = TextEditingController(text: user?.email ?? '');
     _phoneController = TextEditingController(text: user?.phoneNumber ?? '');
   }
 
   @override
   void dispose() {
     _nameController.dispose();
+    _emailController.dispose();
     _phoneController.dispose();
     super.dispose();
   }
@@ -39,6 +42,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     final success = await authProvider.updateProfile(
       name: _nameController.text.trim(),
+      email: _emailController.text.trim(),
       phoneNumber: _phoneController.text.trim(),
     );
 
@@ -66,8 +70,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final user = Provider.of<AuthProvider>(context).user;
-
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -92,24 +94,38 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Username (Read-only)
+                    // Username / Email
                     const Text(
-                      'Username Akun',
+                      'Username / Email Akun *',
                       style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                     ),
                     const SizedBox(height: 6),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: AppColors.background,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: AppColors.border),
+                    TextFormField(
+                      controller: _emailController,
+                      decoration: InputDecoration(
+                        hintText: 'Masukkan email atau username Anda',
+                        prefixIcon: const Icon(Icons.alternate_email, size: 18, color: AppColors.textMuted),
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(color: AppColors.border),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(color: AppColors.border),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       ),
-                      child: Text(
-                        user?.email ?? '-',
-                        style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
-                      ),
+                      validator: (val) {
+                        if (val == null || val.trim().isEmpty) return 'Username / email tidak boleh kosong';
+                        if (!val.contains('@') || !val.contains('.')) return 'Gunakan format email yang valid';
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 16),
 

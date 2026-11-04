@@ -20,12 +20,12 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen>
   late TabController _tabController;
   final ScrollController _scrollController = ScrollController();
 
-  final List<Map<String, String>> _statusTabs = [
-    {'label': 'Semua', 'value': 'all'},
-    {'label': 'Menunggu', 'value': 'pending'},
-    {'label': 'Diproses', 'value': 'in_progress'},
-    {'label': 'Selesai', 'value': 'completed'},
-    {'label': 'Ditolak', 'value': 'rejected'},
+  final List<Map<String, dynamic>> _statusTabs = [
+    {'label': 'Semua', 'value': 'all', 'icon': Icons.list_alt_rounded},
+    {'label': 'Menunggu', 'value': 'pending', 'icon': Icons.hourglass_top_rounded},
+    {'label': 'Diproses', 'value': 'in_progress', 'icon': Icons.sync_rounded},
+    {'label': 'Selesai', 'value': 'completed', 'icon': Icons.check_circle_rounded},
+    {'label': 'Ditolak', 'value': 'rejected', 'icon': Icons.cancel_rounded},
   ];
 
   @override
@@ -77,11 +77,22 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen>
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
+          tabAlignment: TabAlignment.start,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           labelColor: AppColors.primary,
           unselectedLabelColor: AppColors.textMuted,
           indicatorColor: AppColors.primary,
           indicatorWeight: 3,
-          tabs: _statusTabs.map((t) => Tab(text: t['label'])).toList(),
+          tabs: _statusTabs.map((t) => Tab(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(t['icon'] as IconData, size: 16),
+                const SizedBox(width: 6),
+                Text(t['label'] as String, style: const TextStyle(fontWeight: FontWeight.w600)),
+              ],
+            ),
+          )).toList(),
         ),
       ),
       floatingActionButton: widget.isNested
