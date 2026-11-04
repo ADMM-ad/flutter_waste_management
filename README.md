@@ -103,6 +103,15 @@ Backend Laravel berjalan di port lokal `8080` dan AI FastAPI berjalan di port `8
 
 ---
 
+## 🔑 Akun Demo Pengujian
+
+| Role | Username / Email | Password | Keterangan |
+| :--- | :--- | :--- | :--- |
+| **Admin** | `admin` | `12345678` | Akun Administrator |
+| **Warga (User)** | `user` | `12345678` | Akun Warga Pelapor untuk login aplikasi mobile |
+
+---
+
 ## 🧪 Analisis Statis & Pengujian
 
 Sistem telah diuji secara menyeluruh untuk memastikan bebas dari *warning*, *overflow*, maupun regresi:
